@@ -12,11 +12,21 @@ class Cassandra
       client.remove(@keyspace, key, column_path, timestamp, consistency_level)
     end
 
-    def _count_columns(column_family, key, super_column, consistency)
+    # NOTE: start, finish, and count are ignored in 0.6 as there's no server-side support for them.
+    def _count_columns(column_family, key, super_column, start, finish, count, consistency)
       client.get_count(@keyspace, key,
         CassandraThrift::ColumnParent.new(:column_family => column_family, :super_column => super_column),
         consistency
       )
+    end
+
+    # NOTE: The 0.6 branch didn't have server-side support for multiget_count, so we have to fake it by
+    # calling get_count once per key.
+    # NOTE: start, finish, and count are ignored in 0.6 as there's no server-side support for them.
+    def _multi_count_columns(column_family, keys, super_column, start, finish, count, consistency)
+      OrderedHash[*keys.map { |key|
+        [key, _count_columns(column_family, key, super_column, start, finish, count, consistency)]
+      }._flatten_once]
     end
 
     # FIXME: add support for start, stop, count functionality

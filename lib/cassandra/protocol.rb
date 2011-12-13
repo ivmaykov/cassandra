@@ -11,13 +11,13 @@ class Cassandra
       client.remove(key, column_path, timestamp, consistency_level)
     end
 
-    def _count_columns(column_family, key, super_column, start, stop, count, consistency)
+    def _count_columns(column_family, key, super_column, start, finish, count, consistency)
       client.get_count(key,
         CassandraThrift::ColumnParent.new(:column_family => column_family, :super_column => super_column),
         CassandraThrift::SlicePredicate.new(:slice_range =>
                                             CassandraThrift::SliceRange.new(
                                               :start  => start  || '',
-                                              :finish => stop   || '',
+                                              :finish => finish   || '',
                                               :count  => count  || 100
                                             )),
         consistency

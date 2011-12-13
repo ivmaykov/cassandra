@@ -509,19 +509,20 @@ class Cassandra
   # * sub_columns - The list of sub_columns to select.
   # * options - Valid options are:
   #   * :start - The column name to start from.
-  #   * :stop - The column name to stop at.
+  #   * :finish - The column name to stop at.
   #   * :count - The maximum count of columns to return. (By default cassandra will count up to 100 columns)
   #   * :consistency - Uses the default read consistency if none specified.
   #
   def count_columns(column_family, key, *columns_and_options)
     column_family, super_column, _, options = 
       extract_and_validate_params(column_family, key, columns_and_options, READ_DEFAULTS)      
-    _count_columns(column_family, key, super_column, options[:start], options[:stop], options[:count], options[:consistency])
+    _count_columns(column_family, key, super_column, options[:start], options[:finish], options[:count],
+      options[:consistency])
   end
 
   ##
   # Multi-key version of Cassandra#count_columns. Please note that this
-  # queries the server for each key passed in.
+  # queries the server for each key passed in if C* version is 0.6.
   #
   # Supports same parameters as Cassandra#count_columns.
   #
@@ -530,11 +531,16 @@ class Cassandra
   # * columns - Either a single super_column or a list of columns.
   # * sub_columns - The list of sub_columns to select.
   # * options - Valid options are:
+  #   * :start - The column name to start from.
+  #   * :finish - The column name to stop at.
+  #   * :count - The maximum count of columns to return. (By default cassandra will count up to 100 columns)
   #   * :consistency - Uses the default read consistency if none specified.
   #
-  # FIXME: Not real multi; needs server support
   def multi_count_columns(column_family, keys, *options)
-    OrderedHash[*keys.map { |key| [key, count_columns(column_family, key, *options)] }._flatten_once]
+    column_family, super_column, _, options =
+      extract_and_validate_params(column_family, keys, options, READ_DEFAULTS)
+    _multi_count_columns(column_family, keys, super_column, options[:start], options[:finish],
+      options[:count], options[:consistency])
   end
 
   ##
